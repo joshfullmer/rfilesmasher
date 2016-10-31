@@ -3,7 +3,7 @@ library(tools) #used for filename functions
 library(openxlsx) #reads XLSX files quicker than the 'xlsx' package
 
 #manually entered path, but could be edited to take it as input from user
-path <- "C:/Users/josh.fullmer/Documents/R/filesmasher"
+path <- "C:/Users/josh.fullmer/Documents/Data Migration/Range Systems - Randall Mendenhall/QB files"
 
 #gets a vector of all spreadsheet files
 filenames <- dir(path,pattern='.(csv|xlsx|xls)')
@@ -21,14 +21,16 @@ for(i in 1:length(filenames)) {
    if ((file_ext(filenames[i])=='xls')|(file_ext(filenames[i])=='xlsx')){
       
       #reads the first sheet in the Excel file
-      file <- read.xlsx(paste(path,"/",filenames[i],sep=''),1)
+      file <- read.xlsx(paste(path,"/",filenames[i],sep=''),2)
       
       #gets all columns that have Date in the name for Date formatting
       datecols <- names(file)[grepl('Date',names(file))]
       
       #format each of the date columns in the sheet
-      for(j in 1:length(datecols)) {
-         file[[datecols[j]]] <- as.Date(as.POSIXlt(file[[datecols[j]]]*24*60*60,origin='1899-12-30',tz='gmt'))
+      if(length(datecols)!=0) {
+         for(j in 1:length(datecols)) {
+            file[[datecols[j]]] <- as.Date(as.POSIXlt(file[[datecols[j]]]*24*60*60,origin='1899-12-30',tz='gmt'))
+         }
       }
    }
    
@@ -49,6 +51,9 @@ for(i in 1:length(filenames)) {
    
    #stores the filename of the file in a column of the dataframe
    file$filename <- file_path_sans_ext(filenames[i])
+   
+   #converts each column to factor, to help bind_rows conversion
+   file <- as.data.frame(sapply(file,as.factor))
    
    #combines the current file with all previously handled files
    df <- bind_rows(df,file)
